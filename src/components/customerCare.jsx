@@ -2,31 +2,21 @@ export default function CustomerCare() {
   return (
     <div className="page">
       <h2>Customer Care</h2>
-      <p>We’re here to help! Reach out to us anytime.</p>
+      <p>Need help? Here are some common questions.</p>
       
-      <div className="contact-grid">
-        <div>
-          <h3>📞 Call Us</h3>
-          <p>+234 800 123 4567</p>
-          <p>Mon - Sat: 9am - 6pm</p>
-        </div>
-        <div>
-          <h3>📧 Email Us</h3>
-          <p>support@shopeasy.com</p>
-        </div>
-        <div>
-          <h3>📍 Visit Us</h3>
-          <p>123 Market Street, Ibadan, Oyo State</p>
-        </div>
-      </div>
+      <div className="faq">
+        <h4>How do I place an order?</h4>
+        <p>Add items to cart, click cart icon, then "Proceed to Checkout".</p>
 
-      <form className="contact-form">
-        <h3>Send us a message</h3>
-        <input type="text" placeholder="Your Name" required />
-        <input type="email" placeholder="Your Email" required />
-        <textarea placeholder="How can we help you?" rows="4" required></textarea>
-        <button type="submit" onClick={(e) => {e.preventDefault(); alert("Message sent! We will get back to you.")}}>Submit</button>
-      </form>
+        <h4>Is this a real store?</h4>
+        <p>No, this is a demo project using FakeStore API. No real orders or payments.</p>
+
+        <h4>What is the return policy?</h4>
+        <p>30 day demo returns. Just kidding - nothing ships 😄</p>
+
+        <h4>How can I reach support?</h4>
+        <p>Use the Contact page to send us a message.</p>
+      </div>
     </div>
   );
 }

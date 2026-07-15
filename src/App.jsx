@@ -1,123 +1,131 @@
-import { useEffect, useState } from "react";
-import "./App.css";
-import Header from "./components/header";
+import { useState, useEffect } from "react";
 import ProductList from "./components/productList";
 import ProductDetail from "./components/productDetail";
-import CartSidebar from "./components/cartSidebar";
+import CartModal from "./components/cartModal"; // CHANGED
 import CheckoutModal from "./components/checkoutModal";
 import About from "./components/about";
+import Contact from "./components/contact";
 import CustomerCare from "./components/customerCare";
+import "./App.css";
 
-function App() {
-  const ProductUrl = "https://fakestoreapi.com/products";
-
+export default function App() {
   const [products, setProducts] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState("home"); // "home" | "about" | "care"
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [page, setPage] = useState("home");
 
   useEffect(() => {
-    fetch(ProductUrl)
+    fetch("https://fakestoreapi.com/products")
       .then((res) => res.json())
       .then((data) => {
         setProducts(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
         setLoading(false);
       });
   }, []);
 
   const addToCart = (product) => {
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
-      if (existing) {
+      const exist = prev.find((item) => item.id === product.id);
+      if (exist) {
         return prev.map((item) =>
           item.id === product.id ? { ...item, qty: item.qty + 1 } : item
         );
+      } else {
+        return [...prev, { ...product, qty: 1 }];
       }
-      return [...prev, { ...product, qty: 1 }];
     });
-    alert(`${product.title} added to cart`);
   };
 
   const removeFromCart = (id) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
-
-  const handleFakePayment = (e) => {
-    e.preventDefault();
-    alert(`Payment Successful! \nOrder Total: $${cartTotal.toFixed(2)} \nThis is a demo.`);
-    setCart([]);
-    setShowCheckout(false);
-    setShowCart(false);
+  const updateQty = (id, newQty) => { // NEW FUNCTION
+    if (newQty < 1) {
+      removeFromCart(id);
+      return;
+    }
+    setCart((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, qty: newQty } : item))
+    );
   };
 
-  const goHome = () => {
-    setPage("home");
-    setSelectedProduct(null);
-  }
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-  if (loading) return <h2 className="loading">Loading products...</h2>;
+  const handleCheckout = () => {
+    setShowCart(false);
+    setShowCheckout(true);
+  };
+
+  const handlePlaceOrder = () => {
+    alert("Order placed! This is a demo.");
+    setCart([]);
+    setShowCheckout(false);
+  };
+
+  if (loading) return <div className="loading">Loading products...</div>;
 
   return (
     <div className="app-container">
-      <Header 
-        cartCount={cartCount} 
-        onCartClick={() => setShowCart(true)} 
-        onNavigate={setPage}
-        currentPage={page}
-        onHomeClick={goHome}
-      />
+      <header className="app">
+        <div className="logo-nav">
+          <h1 onClick={() => { setPage("home"); setSelectedProduct(null); }}>ShopEasy</h1>
+          <nav>
+            <button className={page === "home" ? "active" : ""} onClick={() => { setPage("home"); setSelectedProduct(null); }}>Home</button>
+            <button className={page === "about" ? "active" : ""} onClick={() => { setPage("about"); setSelectedProduct(null); }}>About</button>
+            <button className={page === "contact" ? "active" : ""} onClick={() => { setPage("contact"); setSelectedProduct(null); }}>Contact</button>
+            <button className={page === "care" ? "active" : ""} onClick={() => { setPage("care"); setSelectedProduct(null); }}>Customer Care</button>
+          </nav>
+        </div>
+        <button className="cart-btn" onClick={() => setShowCart(true)}>
+          Cart ({cart.reduce((sum, item) => sum + item.qty, 0)})
+        </button>
+      </header>
 
-      {/* PAGE ROUTING */}
-      {page === "home" && (
-        selectedProduct ? (
-          <ProductDetail 
-            product={selectedProduct} 
-            onBack={() => setSelectedProduct(null)} 
-            onAddToCart={addToCart} 
+      <main>
+        {page === "home" && !selectedProduct && (
+          <ProductList
+            products={products}
+            onAddToCart={addToCart}
+            onSelectProduct={setSelectedProduct}
           />
-        ) : (
-          <ProductList 
-            products={products} 
-            onSelectProduct={setSelectedProduct} 
-            onAddToCart={addToCart} 
+        )}
+
+        {page === "home" && selectedProduct && (
+          <ProductDetail
+            product={selectedProduct}
+            onAddToCart={addToCart}
+            onBack={() => setSelectedProduct(null)}
           />
-        )
-      )}
+        )}
 
-      {page === "about" && <About />}
-      {page === "care" && <CustomerCare />}
+        {page === "about" && <About />}
+        {page === "contact" && <Contact />}
+        {page === "care" && <CustomerCare />}
+      </main>
 
-      {/* CART SIDEBAR */}
       {showCart && (
-        <CartSidebar 
-          cart={cart} 
-          cartTotal={cartTotal} 
-          onClose={() => setShowCart(false)} 
+        <CartModal // CHANGED
+          cart={cart}
+          cartTotal={cartTotal}
+          onClose={() => setShowCart(false)}
+          onUpdateQty={updateQty} // NEW PROP
           onRemove={removeFromCart}
-          onCheckout={() => setShowCheckout(true)}
+          onCheckout={handleCheckout}
         />
       )}
 
-      {/* CHECKOUT MODAL */}
       {showCheckout && (
-        <CheckoutModal 
-          cartTotal={cartTotal} 
-          onClose={() => setShowCheckout(false)} 
-          onPay={handleFakePayment}
+        <CheckoutModal
+          cart={cart}
+          cartTotal={cartTotal}
+          onClose={() => setShowCheckout(false)}
+          onPlaceOrder={handlePlaceOrder}
         />
       )}
     </div>
   );
 }
-
-export default App;
