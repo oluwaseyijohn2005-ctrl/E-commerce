@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import Header from "./components/header";
 import ProductList from "./components/productList";
-import ProductDetail from "./components/ProductDetail";
+import ProductDetail from "./components/productDetail";
 import CartSidebar from "./components/cartSidebar";
 import CheckoutModal from "./components/checkoutModal";
+import About from "./components/about";
+import CustomerCare from "./components/customerCare";
 
 function App() {
   const ProductUrl = "https://fakestoreapi.com/products";
@@ -15,6 +17,7 @@ function App() {
   const [showCart, setShowCart] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState("home"); // "home" | "about" | "care"
 
   useEffect(() => {
     fetch(ProductUrl)
@@ -23,7 +26,10 @@ function App() {
         setProducts(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
   }, []);
 
   const addToCart = (product) => {
@@ -36,6 +42,7 @@ function App() {
       }
       return [...prev, { ...product, qty: 1 }];
     });
+    alert(`${product.title} added to cart`);
   };
 
   const removeFromCart = (id) => {
@@ -53,18 +60,44 @@ function App() {
     setShowCart(false);
   };
 
+  const goHome = () => {
+    setPage("home");
+    setSelectedProduct(null);
+  }
+
   if (loading) return <h2 className="loading">Loading products...</h2>;
 
   return (
     <div className="app-container">
-      <Header cartCount={cartCount} onCartClick={() => setShowCart(true)} onHomeClick={() => setSelectedProduct(null)} />
+      <Header 
+        cartCount={cartCount} 
+        onCartClick={() => setShowCart(true)} 
+        onNavigate={setPage}
+        currentPage={page}
+        onHomeClick={goHome}
+      />
 
-      {selectedProduct ? (
-        <ProductDetail product={selectedProduct} onBack={() => setSelectedProduct(null)} onAddToCart={addToCart} />
-      ) : (
-        <ProductList products={products} onSelectProduct={setSelectedProduct} />
+      {/* PAGE ROUTING */}
+      {page === "home" && (
+        selectedProduct ? (
+          <ProductDetail 
+            product={selectedProduct} 
+            onBack={() => setSelectedProduct(null)} 
+            onAddToCart={addToCart} 
+          />
+        ) : (
+          <ProductList 
+            products={products} 
+            onSelectProduct={setSelectedProduct} 
+            onAddToCart={addToCart} 
+          />
+        )
       )}
 
+      {page === "about" && <About />}
+      {page === "care" && <CustomerCare />}
+
+      {/* CART SIDEBAR */}
       {showCart && (
         <CartSidebar 
           cart={cart} 
@@ -75,6 +108,7 @@ function App() {
         />
       )}
 
+      {/* CHECKOUT MODAL */}
       {showCheckout && (
         <CheckoutModal 
           cartTotal={cartTotal} 
