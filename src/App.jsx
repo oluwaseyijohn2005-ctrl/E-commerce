@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ProductList from "./components/productList";
 import ProductDetail from "./components/productDetail";
-import CartModal from "./components/cartModal"; // CHANGED
+import CartModal from "./components/cartModal";
 import CheckoutModal from "./components/checkoutModal";
 import About from "./components/about";
 import Contact from "./components/contact";
@@ -16,6 +16,7 @@ export default function App() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [page, setPage] = useState("home");
+  const [search, setSearch] = useState(""); // NEW: for search
 
   useEffect(() => {
     fetch("https://fakestoreapi.com/products")
@@ -43,7 +44,7 @@ export default function App() {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const updateQty = (id, newQty) => { // NEW FUNCTION
+  const updateQty = (id, newQty) => {
     if (newQty < 1) {
       removeFromCart(id);
       return;
@@ -54,6 +55,7 @@ export default function App() {
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0); // cleaner
 
   const handleCheckout = () => {
     setShowCart(false);
@@ -65,6 +67,11 @@ export default function App() {
     setCart([]);
     setShowCheckout(false);
   };
+
+  // NEW: Filter products based on search
+  const filteredProducts = products.filter(product => 
+    product.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (loading) return <div className="loading">Loading products...</div>;
 
@@ -80,15 +87,27 @@ export default function App() {
             <button className={page === "care" ? "active" : ""} onClick={() => { setPage("care"); setSelectedProduct(null); }}>Customer Care</button>
           </nav>
         </div>
+
+        {/* NEW: Search Bar */}
+        {page === "home" && !selectedProduct && (
+          <input 
+            type="text"
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="search-bar"
+          />
+        )}
+
         <button className="cart-btn" onClick={() => setShowCart(true)}>
-          Cart ({cart.reduce((sum, item) => sum + item.qty, 0)})
+          Cart ({cartCount})
         </button>
       </header>
 
       <main>
         {page === "home" && !selectedProduct && (
           <ProductList
-            products={products}
+            products={filteredProducts} // CHANGED: use filteredProducts
             onAddToCart={addToCart}
             onSelectProduct={setSelectedProduct}
           />
@@ -108,11 +127,11 @@ export default function App() {
       </main>
 
       {showCart && (
-        <CartModal // CHANGED
+        <CartModal
           cart={cart}
           cartTotal={cartTotal}
           onClose={() => setShowCart(false)}
-          onUpdateQty={updateQty} // NEW PROP
+          onUpdateQty={updateQty}
           onRemove={removeFromCart}
           onCheckout={handleCheckout}
         />
